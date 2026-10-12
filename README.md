@@ -1,7 +1,46 @@
-VaCuus
-======
+<!--
+  Images are linked by RELATIVE path and live in docs/marketing/ (sources and recipes:
+  docs/marketing/README.md). This file also ships inside the plugin package
+  (Config/FilterPlugin.ini, /README.md) and docs/marketing/ does not, so the packaged copy shows
+  each image's alt text instead -- accepted: only docs/buyer/ ships (Tools/fab_inventory.sh).
+  Rasters are .webp on purpose: *.png is Git LFS here, and LFS bills every README view.
+-->
 
-HTML/CSS user interface for Unreal Engine, rendered **off the game thread**.
+<p align="center">
+  <a href="https://vacuus.ufna.dev/">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/marketing/brand/vacuus-wordmark-dark.svg" />
+      <img src="docs/marketing/brand/vacuus-wordmark-light.svg" alt="VaCuus" width="380" />
+    </picture>
+  </a>
+</p>
+
+<p align="center">
+  <strong>Game UI in HTML/CSS for Unreal Engine — rendered off the game thread.</strong><br />
+  RmlUi layout and styling, optional JavaScript, on a dedicated UI thread —<br />
+  the game thread pays for a queue write and a snapshot read, nothing else.
+</p>
+
+<p align="center">
+  <a href="docs/buyer/setup.md">Get started</a> &nbsp;|&nbsp;
+  <a href="#features">Features</a> &nbsp;|&nbsp;
+  <a href="#measured-not-promised">Performance</a> &nbsp;|&nbsp;
+  <a href="https://vacuus.ufna.dev/">Website</a> &nbsp;|&nbsp;
+  <a href="https://github.com/ufna/VaCuus/releases">Download</a> &nbsp;|&nbsp;
+  <a href="https://fab.com/s/6571fd1716eb">Fab</a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/ufna/VaCuus/releases/latest"><img src="https://img.shields.io/github/v/release/ufna/VaCuus?style=flat-square&label=release&labelColor=12171f&color=ffb43c" alt="Latest release" /></a>
+  <a href="docs/buyer/setup.md"><img src="https://img.shields.io/badge/Unreal%20Engine-5.6%20%C2%B7%205.7%20%C2%B7%205.8-e7edf5?style=flat-square&logo=unrealengine&logoColor=white&labelColor=12171f" alt="Unreal Engine 5.6, 5.7, 5.8" /></a>
+  <a href="docs/buyer/setup.md"><img src="https://img.shields.io/badge/platforms-Win%20%C2%B7%20Mac%20%C2%B7%20Linux%20%C2%B7%20Android%20%C2%B7%20iOS-6fd3f7?style=flat-square&labelColor=12171f" alt="Windows, macOS, Linux, Android, iOS" /></a>
+  <a href="LICENSE.md"><img src="https://img.shields.io/badge/license-BUSL%201.1%20%E2%86%92%20MIT-9aa6b4?style=flat-square&labelColor=12171f" alt="Business Source License 1.1, converts to MIT" /></a>
+</p>
+
+<p align="center">
+  <a href="site/public/shots/refhud.png"><img src="docs/marketing/readme/refhud.webp" alt="The VaCuus reference HUD: scoreboard, killfeed, minimap, ability bar, damage numbers and a settings panel over an Unreal level" width="100%" /></a><br />
+  <sub><code>vacuus.RefHud</code> — the reference HUD the plugin ships and measures itself against: 1,732 live nodes over an Unreal level, captured headless.</sub>
+</p>
 
 You author screens as `.rml`/`.rcss` documents — the web languages, not a UMG graph — and
 the plugin runs them on its own UI thread: layout, styling and draw-command recording all
@@ -21,6 +60,78 @@ document can be a full-screen HUD or a panel on a quad in the world.
 > ([`docs/buyer/setup.md`](docs/buyer/setup.md) says how to check).
 > The API is stable — breaking changes are reserved for major versions and carry
 > release notes.
+
+## Features
+
+<table>
+  <tr>
+    <td width="42%" valign="middle">
+      <h3>The web's languages, a game's input</h3>
+      <p>Screens are plain <code>.rml</code> and <code>.rcss</code> files on disk. <code>:hover</code>, <code>:active</code> and <code>:focus</code>, Tab navigation, text input with IME, wheel-scrolled lists — and clicks that pass through the UI to the game where you say so. Save the file and the editor live-reloads the document, no recompile.</p>
+      <p>Bind <code>UPROPERTY</code> data straight into the markup, script it in JavaScript, or author in TSX with Preact via <code>vacuus dev</code>.</p>
+    </td>
+    <td width="58%">
+      <a href="site/public/shots/m2demo.png"><img src="docs/marketing/readme/m2demo.webp" alt="Interaction demo: buttons with hover and focus states, a text field, a scrolling list and a pass-through region" width="640" /></a>
+    </td>
+  </tr>
+  <tr>
+    <td valign="middle">
+      <h3>On the screen, or in the world</h3>
+      <p><code>UVaCuusWidget</code> puts a document in UMG; <code>UVaCuusWorldComponent</code> puts the same document on a quad in the level. World panels take clicks by raycast, and data binding and JavaScript keep running on them exactly as on screen.</p>
+    </td>
+    <td>
+      <a href="site/public/shots/world.png"><img src="docs/marketing/readme/world.webp" alt="A JavaScript demo document rendered on a quad standing in an Unreal level: killfeed, health bars and damage numbers" width="640" /></a>
+    </td>
+  </tr>
+  <tr>
+    <td valign="middle">
+      <h3>Glass over the live scene</h3>
+      <p><code>backdrop-filter: blur(…)</code> blurs the actual 3D scene behind a panel, rounded or square, and re-blurs it every engine frame at composite time — the document itself can stay idle and publish nothing while the world behind it moves.</p>
+    </td>
+    <td>
+      <a href="site/public/shots/glass.png"><img src="docs/marketing/readme/glass.webp" alt="Three panels over an Unreal level: rounded backdrop blur, square backdrop blur, and an unblurred control" width="640" /></a>
+    </td>
+  </tr>
+  <tr>
+    <td valign="middle">
+      <h3>Gradients, decorators, engine materials</h3>
+      <p>Linear, repeating, radial and conic gradients render through the same recorder as everything else. <code>shader(…)</code> decorators resolve built-in names first, then <code>UMaterial</code> style keys your game registers — engine materials as CSS backgrounds.</p>
+    </td>
+    <td>
+      <a href="site/public/shots/deco.png"><img src="docs/marketing/readme/deco.webp" alt="Six decorator panels: linear gradient, hazard stripes, radial gradient, conic hue wheel, a glass-panel shader and a plain control" width="640" /></a>
+    </td>
+  </tr>
+</table>
+
+### Off the game thread, by construction
+
+One process-wide UI thread owns every RmlUi context — RmlUi's state is process-global, so
+this is the shape it has to have. Each UI frame drains the command queue, updates layout and
+style, publishes a snapshot of the interactive regions, and records draw commands without
+touching the GPU. The render thread replays them into a persistent render target that Slate
+composites. Slate needs a synchronous *Handled / Unhandled* answer about geometry that lives on
+another thread; the snapshot is that answer.
+
+<p align="center">
+  <img src="docs/marketing/readme/threads.svg" alt="One UI frame across three threads: the game thread enqueues input and reads a snapshot; the UI thread drains, updates, publishes the snapshot and records commands; the render thread replays them into a render target that Slate composites. An unchanged frame crosses nothing." width="100%" />
+</p>
+
+### Measured, not promised
+
+The workload is the plugin's own 1,732-node reference HUD, animating every frame on purpose —
+the worst case it ships. Cooked Shipping, Linux, Vulkan, 1920×1080, UE 5.8.1:
+
+| | Measured | Budget | Headroom |
+| --- | ---: | ---: | ---: |
+| Game thread, per frame | **0.008–0.009 ms** | 0.10 ms | ~8–11× |
+| Composite only, idle UI | **0.002 ms** | 0.05 ms | ~12–25× |
+| Added RAM, JS heap included | **+14.3 MB** | 32 MB | ~2.2× |
+| Added disk, binary + cooked bundle | **+3.22 MiB** | 10 MB | ~3× |
+
+A static HUD published **1 frame in 6,910** — publication is withheld while the content hash
+is unchanged, so a static pause menu costs only its composite. Every number is re-runnable in your own
+project (`vacuus.RefHud` + `vacuus.M1HUD.PerfLog 1`); methods, the Dev column and the rows
+that are tighter than these are in [`docs/buyer/perf-guide.md`](docs/buyer/perf-guide.md).
 
 ## Read these, in this order
 
