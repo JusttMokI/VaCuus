@@ -46,7 +46,7 @@ back as "100" and never compares equal to the string that produced it. Every dir
 the bound variable therefore called Element::SetProperty with an unchanged value, and
 SetProperty does not compare either (ElementStyle.cpp:642-654 -> PropertyDictionary
 ::SetProperty + DirtyProperty, unconditional), nor does ComputeValues, which returns
-the DIRTY set rather than a changed-value set (ElementStyle.cpp:1058-1062). So the
+the DIRTY set rather than a changed-value set (ElementStyle.cpp:1060-1064). So the
 element restyles, and a layout property relayouts the whole document, every time.
 
 Whether that also costs a PUBLISHED frame depends on which property is bound, and the
@@ -846,3 +846,37 @@ Warning. Restore-the-bug, 2026-10-06: Warning removed -> expectation unmet (Fail
 
 NOT yet offered upstream, any of #10-#13. #11, #12 and #13 are upstream-shaped as they stand; #10
 exists for a write router upstream does not have, and would need a reason to be accepted.
+
+Patch #14 -- a fractional font-size loads the face one whole pixel below it.
+
+One file, one hunk: Source/Core/ElementStyle.cpp, ElementStyle::ComputeValues asks the font engine
+for the face at Math::RoundToInteger(font_size) instead of (int)font_size (:1035-1038).
+
+THE DEFECT IS UPSTREAM'S. The font engine keys a face by a whole pixel size
+(Include/RmlUi/Core/FontEngineInterface.h:68), and the computed font-size is a float that is whole
+only when it was authored in px: dp is the number times the context's ratio
+(Source/Core/ComputeProperty.cpp:62), which VaCuus sets per view (VaCuusUIThread.cpp:1716-1720),
+and em, rem, vw and vh scale the same way. The cast always went down, so a size a hair under a
+pixel lost the whole pixel -- 10.95px drew at 10, 13dp at a ratio of 1.5 (19.5px) at 19 -- while
+the line height, computed from the float, kept the full size. Found in a game that sets
+`body { font-size: 0.0925926vh; }` so its UI scales with the window: below 1080 high nearly every
+size is fractional, and each caption drew up to a pixel small.
+
+Math::RoundToInteger rounds half away from zero (Source/Core/Math.cpp:121-127), so 10.5 is 11.
+This is the only place Source/Core turns a computed font-size into a face size; every other
+GetFontFaceHandle in it is Element's accessor for the handle stored here.
+
+Line shifts: ElementStyle.cpp +2 from old :1037. Two in-repo citations moved, each compared with
+the line it named on master (equal): this file's (ElementStyle.cpp:1060-1064, top of the file) and
+docs/buyer/gotchas.md (:1249). Dated design notes under docs/superpowers were left as records.
+
+Test: VaCuus.Font.FractionalSize (Source/VaCuus/Private/Tests/VaCuusFontSizeTest.cpp) -- divs at
+10.95px, 10.5px and 13dp with the context's dp ratio at 1.5, and two controls at 10.4px and 11px;
+it reads the size of the face each one's computed values hold, through
+FontEngineInterface::GetFontMetrics. Restore-the-bug, Win64, UE 5.8 host editor, -unattended
+-nullrhi, 2026-10-16:
+  - patch absent: Result={Fail} on the three fractional divs only -- faces of 10, 10 and 19 px
+    against 11, 11 and 20; both controls passed;
+  - patch present: Success; the rest of VaCuus. green alongside it (280 of 280).
+
+NOT yet offered upstream. Upstream-shaped as it stands.
